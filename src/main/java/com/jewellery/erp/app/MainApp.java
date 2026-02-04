@@ -1,27 +1,31 @@
 package com.jewellery.erp.app;
 
 import javafx.application.Application;
-import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 import com.jewellery.erp.config.AppConfig;
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // Initialize Config
-        AppConfig.initialize();
+        try {
+            // Initialize Config (DB, Hibernate)
+            AppConfig.initialize();
 
-        // Basic Foundation Check UI
-        Label label = new Label("Jewellery ERP - Phase 0 Foundation");
-        StackPane root = new StackPane(label);
-        Scene scene = new Scene(root, 800, 600);
+            // Load Login View
+            Parent root = FXMLLoader.load(getClass().getResource("/view/login.fxml"));
+            Scene scene = new Scene(root);
 
-        primaryStage.setTitle("Jewellery ERP");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+            primaryStage.setTitle("Jewellery ERP - Login");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {

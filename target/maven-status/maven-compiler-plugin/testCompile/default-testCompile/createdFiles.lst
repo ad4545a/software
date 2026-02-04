@@ -1,1 +1,9 @@
+com\jewellery\erp\test\MachineUtilTest.class
+com\jewellery\erp\test\phase1\security\PasswordTest.class
+com\jewellery\erp\test\phase1\machine\MachineTest.class
+com\jewellery\erp\test\phase1\authorization\RbacTest.class
 com\jewellery\erp\test\FoundationTest.class
+com\jewellery\erp\test\phase1\repository\RepositoryTest.class
+com\jewellery\erp\test\SecurityTest.class
+com\jewellery\erp\test\phase1\auth\AuthTest.class
+com\jewellery\erp\test\phase1\session\SessionTest.class
