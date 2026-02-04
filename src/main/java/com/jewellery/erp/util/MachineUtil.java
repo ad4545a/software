@@ -8,35 +8,31 @@ public class MachineUtil {
 
     public static String getMachineId() {
         try {
-            StringBuilder sb = new StringBuilder();
+            // Composite fingerprint: OS, Arch, UserHome, JVM Vendor
+            String osName = System.getProperty("os.name");
+            String osArch = System.getProperty("os.arch");
+            String userHome = System.getProperty("user.home");
+            String javaVendor = System.getProperty("java.vendor");
 
-            // 1. OS Name (Stable)
-            sb.append(System.getProperty("os.name")).append("|");
-
-            // 2. OS Arch (Stable)
-            sb.append(System.getProperty("os.arch")).append("|");
-
-            // 3. User Home (Stable per user)
-            sb.append(System.getProperty("user.home")).append("|");
-
-            // 4. Disk Root (Stable) - usually C:\ or /
-            File[] roots = File.listRoots();
-            if (roots != null && roots.length > 0) {
-                sb.append(roots[0].getAbsolutePath()).append("|");
+            // Validation
+            if (osName == null || userHome == null || javaVendor == null) {
+                throw new IllegalStateException(
+                        "Cannot generate stable machine fingerprint: system properties unavailable");
+            }
+            if (!new File(userHome).exists()) {
+                throw new IllegalStateException("Invalid machine fingerprint source: user.home does not exist");
             }
 
-            // 5. JVM Vendor (Stable for this installation)
-            sb.append(System.getProperty("java.vendor"));
+            String fingerprint = String.join("|", osName, osArch, userHome, javaVendor);
 
-            // Hash it
+            // Hash it with SHA-256
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(sb.toString().getBytes(StandardCharsets.UTF_8));
+            byte[] hash = digest.digest(fingerprint.getBytes(StandardCharsets.UTF_8));
 
             return bytesToHex(hash);
 
         } catch (Exception e) {
-            // Fallback (Should rarely happen in standard JVM)
-            return "UNKNOWN_MACHINE_ID";
+            throw new RuntimeException("Failed to generate machine ID", e);
         }
     }
 

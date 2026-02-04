@@ -6,7 +6,6 @@ import com.jewellery.erp.model.UserRole;
 import com.jewellery.erp.repository.UserRepository;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.io.File;

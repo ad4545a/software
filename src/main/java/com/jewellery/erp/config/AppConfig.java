@@ -2,14 +2,13 @@ package com.jewellery.erp.config;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-import java.io.File;
 
 public class AppConfig {
 
     private static SessionFactory sessionFactory;
-    private static final String DB_URL = "jdbc:h2:./data/jewellery;CIPHER=AES";
-    private static final String DB_USER = "admin";
-    private static final String DB_PASS = "filepwd userpwd";
+    private static final String DB_URL = ConfigLoader.get("db.url");
+    private static final String DB_USER = ConfigLoader.get("db.user");
+    private static final String DB_PASS = ConfigLoader.get("db.password");
 
     public static void initialize() {
         System.out.println("Initializing Application...");

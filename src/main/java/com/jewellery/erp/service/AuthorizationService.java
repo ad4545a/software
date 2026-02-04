@@ -23,6 +23,10 @@ public class AuthorizationService {
     }
 
     public boolean hasPermission(UserRole role, Feature feature) {
+        if (role == null) {
+            throw new IllegalArgumentException("Role cannot be null");
+        }
+
         if (role == UserRole.ADMIN)
             return true;
 

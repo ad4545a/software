@@ -10,9 +10,9 @@ import java.sql.Statement;
 
 public class DatabaseInitializer {
 
-    private static final String DB_URL = "jdbc:h2:./data/jewellery;CIPHER=AES";
-    private static final String DB_USER = "admin";
-    private static final String DB_PASS = "filepwd userpwd";
+    private static final String DB_URL = com.jewellery.erp.config.ConfigLoader.get("db.url");
+    private static final String DB_USER = com.jewellery.erp.config.ConfigLoader.get("db.user");
+    private static final String DB_PASS = com.jewellery.erp.config.ConfigLoader.get("db.password");
 
     public static void initialize() {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
@@ -67,15 +67,23 @@ public class DatabaseInitializer {
                     ")");
         }
 
-        // Insert Default Admin
-        String adminHash = BCrypt.hashpw("admin123", BCrypt.gensalt(12));
+        // Insert Default Admin with Random Password (First Run Only)
+        String tempPassword = com.jewellery.erp.util.SecurePasswordGenerator.generate();
+        String adminHash = BCrypt.hashpw(tempPassword, BCrypt.gensalt(12));
+
         try (PreparedStatement ps = conn.prepareStatement(
                 "MERGE INTO USERS (username, password_hash, role) KEY(username) VALUES (?, ?, ?)")) {
             ps.setString(1, "admin");
             ps.setString(2, adminHash);
             ps.setString(3, "ADMIN");
             ps.executeUpdate();
-            System.out.println("Default Admin User Configured.");
+
+            System.out.println("═══════════════════════════════════════════════════════════════");
+            System.out.println("  ⚠️  INITIAL ADMIN PASSWORD (SAVE THIS IMMEDIATELY): ");
+            System.out.println("  Username: admin");
+            System.out.println("  Password: " + tempPassword);
+            System.out.println("  ⚡ CHANGE THIS PASSWORD ON FIRST LOGIN ⚡");
+            System.out.println("═══════════════════════════════════════════════════════════════");
         }
 
         // Update Schema Version

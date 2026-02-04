@@ -2,7 +2,7 @@ package com.jewellery.erp.security;
 
 import com.jewellery.erp.model.UserRole;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class UserSession {
 
@@ -11,9 +11,9 @@ public class UserSession {
     private final UserRole role;
     private final LocalDateTime loginTime;
     private final String machineId;
-    private LocalDateTime lastActivity;
+    private final AtomicLong lastActivityMillis;
 
-    private static final int TIMEOUT_MINUTES = 30;
+    private static final long TIMEOUT_MILLIS = 30 * 60 * 1000; // 30 minutes
 
     public UserSession(Long userId, String username, UserRole role, String machineId) {
         this.userId = userId;
@@ -21,16 +21,20 @@ public class UserSession {
         this.role = role;
         this.machineId = machineId;
         this.loginTime = LocalDateTime.now();
-        this.lastActivity = LocalDateTime.now();
+        this.lastActivityMillis = new AtomicLong(System.currentTimeMillis());
     }
 
     public boolean isValid() {
-        long minutes = ChronoUnit.MINUTES.between(lastActivity, LocalDateTime.now());
-        return minutes < TIMEOUT_MINUTES;
+        long elapsed = System.currentTimeMillis() - lastActivityMillis.get();
+        return elapsed < TIMEOUT_MILLIS;
     }
 
     public void touch() {
-        this.lastActivity = LocalDateTime.now();
+        lastActivityMillis.set(System.currentTimeMillis());
+    }
+
+    public long getLastActivityMillis() {
+        return lastActivityMillis.get();
     }
 
     // Getters
@@ -54,7 +58,4 @@ public class UserSession {
         return loginTime;
     }
 
-    public LocalDateTime getLastActivity() {
-        return lastActivity;
-    }
 }

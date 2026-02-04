@@ -1,25 +1,28 @@
 package com.jewellery.erp.security;
 
-public class SecurityContext {
+import java.util.concurrent.atomic.AtomicReference;
 
-    private static UserSession currentSession;
+public final class SecurityContext {
+
+    private static final AtomicReference<UserSession> SESSION = new AtomicReference<>();
 
     public static void setSession(UserSession session) {
-        currentSession = session;
+        SESSION.set(session);
     }
 
     public static UserSession getSession() {
-        if (currentSession != null && !currentSession.isValid()) {
+        UserSession session = SESSION.get();
+        if (session != null && !session.isValid()) {
             clear(); // Auto-clear if expired
         }
-        return currentSession;
-    }
-
-    public static void clear() {
-        currentSession = null;
+        return SESSION.get();
     }
 
     public static boolean isAuthenticated() {
         return getSession() != null;
+    }
+
+    public static void clear() {
+        SESSION.set(null);
     }
 }

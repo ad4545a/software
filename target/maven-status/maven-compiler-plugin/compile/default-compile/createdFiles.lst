@@ -4,7 +4,9 @@ com\jewellery\erp\model\User.class
 com\jewellery\erp\model\LoginAudit.class
 com\jewellery\erp\controller\LoginController.class
 com\jewellery\erp\repository\UserRepository.class
+com\jewellery\erp\config\ConfigLoader.class
 com\jewellery\erp\model\Feature.class
+com\jewellery\erp\util\SecurePasswordGenerator.class
 com\jewellery\erp\util\PasswordUtil.class
 com\jewellery\erp\app\MainApp.class
 com\jewellery\erp\security\UserSession.class

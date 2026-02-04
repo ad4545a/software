@@ -19,29 +19,32 @@ public class AuthService {
     private final UserRepository userRepository = new UserRepository();
     private final LoginAuditRepository auditRepository = new LoginAuditRepository();
 
+    // Dummy hash for timing-safe verification (prevents user enumeration)
+    private static final String DUMMY_HASH = "$2a$12$C6UzMDM.H6dfI/f/IKcEeO5PmF4wZ6Xr2yQzZvKqH8YrZvKqH8Yr";
+
     public UserSession login(String username, String password) {
         Transaction tx = null;
         try (Session session = AppConfig.getSessionFactory().openSession()) {
             tx = session.beginTransaction();
 
-            // 1. Fetch User (Generic Error on failure to prevent enumeration)
+            // 1. Fetch User
             Optional<User> userOpt = userRepository.findByUsername(session, username);
 
-            if (!userOpt.isPresent()) {
+            // 2. Timing-safe password verification
+            String hash = userOpt.isPresent() ? userOpt.get().getPasswordHash() : DUMMY_HASH;
+            boolean passwordMatch = PasswordUtil.checkPassword(password, hash);
+
+            // 3. Validate User, Password, and Active Status
+            if (!userOpt.isPresent() || !passwordMatch) {
+                if (userOpt.isPresent()) {
+                    logAudit(session, userOpt.get().getId(), false);
+                }
+                tx.commit();
                 throw new AuthException("Invalid username or password");
             }
 
             User user = userOpt.get();
 
-            // 2. Check Password
-            boolean passwordMatch = PasswordUtil.checkPassword(password, user.getPasswordHash());
-            if (!passwordMatch) {
-                logAudit(session, user.getId(), false);
-                tx.commit();
-                throw new AuthException("Invalid username or password");
-            }
-
-            // 3. Check Active Status
             if (!user.isActive()) {
                 logAudit(session, user.getId(), false);
                 tx.commit();
@@ -59,7 +62,6 @@ public class AuthService {
             return userSession;
 
         } catch (AuthException e) {
-            // Transaction managed inside logic for Audit consistency
             throw e;
         } catch (Exception e) {
             if (tx != null && tx.isActive())

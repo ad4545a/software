@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AuthTest {
 
+    private static String adminPassword;
     private static AuthService authService;
 
     @BeforeAll
@@ -24,13 +25,28 @@ public class AuthTest {
         if (dbFile.exists())
             dbFile.delete();
 
-        AppConfig.initialize(); // Creates Admin user
+        // Capture admin password from System.out during initialization
+        // Since we can't easily capture console output, we'll query the DB and use a
+        // known test password
+        // OR: For testing purposes, temporarily set a known password after init
+        AppConfig.initialize(); // Creates Admin user with random password
+
+        // Reset admin password to a known value for testing
+        try (Session s = AppConfig.getSessionFactory().openSession()) {
+            org.hibernate.Transaction tx = s.beginTransaction();
+            s.createNativeQuery("UPDATE USERS SET password_hash = :hash WHERE username = 'admin'")
+                    .setParameter("hash", com.jewellery.erp.util.PasswordUtil.hashPassword("admin123"))
+                    .executeUpdate();
+            tx.commit();
+        }
+
+        adminPassword = "admin123";
         authService = new AuthService();
     }
 
     @Test
     public void testValidLogin() {
-        UserSession session = authService.login("admin", "admin123");
+        UserSession session = authService.login("admin", adminPassword);
         assertNotNull(session);
         assertEquals(UserRole.ADMIN, session.getRole());
         assertTrue(SecurityContext.isAuthenticated());

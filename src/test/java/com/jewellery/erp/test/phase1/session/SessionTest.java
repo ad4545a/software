@@ -3,7 +3,6 @@ package com.jewellery.erp.test.phase1.session;
 import com.jewellery.erp.model.UserRole;
 import com.jewellery.erp.security.UserSession;
 import org.junit.jupiter.api.Test;
-import java.time.LocalDateTime;
 import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,10 +20,15 @@ public class SessionTest {
     public void testTimeout() throws Exception {
         UserSession session = new UserSession(1L, "test", UserRole.STAFF, "machine-id");
 
-        // Reflection to modify lastActivity to > 30 mins ago
-        Field lastActivityField = UserSession.class.getDeclaredField("lastActivity");
+        // Reflection to modify lastActivityMillis to > 30 mins ago
+        Field lastActivityField = UserSession.class.getDeclaredField("lastActivityMillis");
         lastActivityField.setAccessible(true);
-        lastActivityField.set(session, LocalDateTime.now().minusMinutes(31));
+        long oldTimestamp = System.currentTimeMillis() - (31 * 60 * 1000); // 31 minutes ago
+
+        // Access the AtomicLong and set it
+        java.util.concurrent.atomic.AtomicLong atomicField = (java.util.concurrent.atomic.AtomicLong) lastActivityField
+                .get(session);
+        atomicField.set(oldTimestamp);
 
         assertFalse(session.isValid(), "Session should be invalid after 30+ minutes");
     }
@@ -33,21 +37,21 @@ public class SessionTest {
     public void testActivityRefresh() throws Exception {
         UserSession session = new UserSession(1L, "test", UserRole.STAFF, "machine-id");
 
-        // Mock old time
-        Field lastActivityField = UserSession.class.getDeclaredField("lastActivity");
+        // Set to 29 minutes ago
+        Field lastActivityField = UserSession.class.getDeclaredField("lastActivityMillis");
         lastActivityField.setAccessible(true);
-        lastActivityField.set(session, LocalDateTime.now().minusMinutes(29));
+        long oldTimestamp = System.currentTimeMillis() - (29 * 60 * 1000);
+
+        java.util.concurrent.atomic.AtomicLong atomicField = (java.util.concurrent.atomic.AtomicLong) lastActivityField
+                .get(session);
+        atomicField.set(oldTimestamp);
 
         assertTrue(session.isValid(), "Should still be valid at 29 mins");
 
+        // Touch to refresh
         session.touch();
 
-        lastActivityField.set(session, LocalDateTime.now().minusMinutes(31));
-        // Note: touch() resets it to NOW. So setting it to -31 above is overriding
-        // touch if done after.
-        // Let's re-verify:
-        // 1. Set to old
-        // 2. Touch
-        // 3. Verify valid
+        // Should now be valid again
+        assertTrue(session.isValid(), "Should be valid after touch()");
     }
 }
