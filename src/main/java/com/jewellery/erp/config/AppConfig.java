@@ -31,9 +31,19 @@ public class AppConfig {
             configuration.setProperty("hibernate.hbm2ddl.auto", "validate"); // Validate schema created by Initializer
             configuration.setProperty("hibernate.current_session_context_class", "thread");
 
-            // Add Annotated Classes
+            // Add Annotated Classes - Phase 1
             configuration.addAnnotatedClass(com.jewellery.erp.model.User.class);
             configuration.addAnnotatedClass(com.jewellery.erp.model.LoginAudit.class);
+
+            // Add Annotated Classes - Phase 2 Master Data
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Company.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.UserProfile.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Metal.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Purity.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Item.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Stone.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Tax.class);
+            configuration.addAnnotatedClass(com.jewellery.erp.master.entity.Counter.class);
 
             sessionFactory = configuration.buildSessionFactory();
             System.out.println("Database Connection Established & Hibernate Configured.");

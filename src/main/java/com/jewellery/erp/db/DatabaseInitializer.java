@@ -41,7 +41,12 @@ public class DatabaseInitializer {
 
             if (currentVersion < 2) {
                 applyVersion2(conn);
-                currentVersion = 2; // Update for next step if any
+                currentVersion = 2;
+            }
+
+            if (currentVersion < 3) {
+                applyVersion3(conn);
+                currentVersion = 3;
             }
 
         } catch (Exception e) {
@@ -110,5 +115,126 @@ public class DatabaseInitializer {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("MERGE INTO SCHEMA_VERSION (version) KEY(version) VALUES (2)");
         }
+    }
+
+    private static void applyVersion3(Connection conn) throws Exception {
+        System.out.println("Applying Schema Version 3 (Phase 2: Master Data)...");
+
+        // 1. COMPANY Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS COMPANY (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(200) UNIQUE NOT NULL, " +
+                    "address VARCHAR(500), " +
+                    "phone VARCHAR(20), " +
+                    "gst_number VARCHAR(15), " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // 2. USER_PROFILE Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS USER_PROFILE (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "user_id BIGINT UNIQUE NOT NULL, " +
+                    "full_name VARCHAR(100) NOT NULL, " +
+                    "mobile VARCHAR(15), " +
+                    "assigned_counter BIGINT, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // 3. METAL Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS METAL (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(50) UNIQUE NOT NULL, " +
+                    "code VARCHAR(10) UNIQUE NOT NULL, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // 4. PURITY Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS PURITY (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "metal_id BIGINT NOT NULL, " +
+                    "name VARCHAR(50) NOT NULL, " +
+                    "percentage DOUBLE NOT NULL, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP, " +
+                    "CONSTRAINT uk_purity_metal_name UNIQUE (metal_id, name), " +
+                    "FOREIGN KEY (metal_id) REFERENCES METAL(id)" +
+                    ")");
+        }
+
+        // 5. ITEM Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS ITEM (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(100) NOT NULL, " +
+                    "metal_id BIGINT NOT NULL, " +
+                    "purity_id BIGINT, " +
+                    "wastage_percent DOUBLE DEFAULT 0.0 NOT NULL, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP, " +
+                    "CONSTRAINT uk_item_name_metal_purity UNIQUE (name, metal_id, purity_id), " +
+                    "FOREIGN KEY (metal_id) REFERENCES METAL(id), " +
+                    "FOREIGN KEY (purity_id) REFERENCES PURITY(id)" +
+                    ")");
+        }
+
+        // 6. STONE Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS STONE (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(100) UNIQUE NOT NULL, " +
+                    "unit VARCHAR(20) NOT NULL, " +
+                    "rate_type VARCHAR(20) NOT NULL, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // 7. TAX Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS TAX (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(100) UNIQUE NOT NULL, " +
+                    "percentage DOUBLE NOT NULL, " +
+                    "is_default BOOLEAN DEFAULT FALSE NOT NULL, " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // 8. COUNTER Table
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS COUNTER (" +
+                    "id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
+                    "name VARCHAR(100) UNIQUE NOT NULL, " +
+                    "location VARCHAR(200), " +
+                    "active BOOLEAN DEFAULT TRUE NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, " +
+                    "updated_at TIMESTAMP" +
+                    ")");
+        }
+
+        // Update Schema Version
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("MERGE INTO SCHEMA_VERSION (version) KEY(version) VALUES (3)");
+        }
+
+        System.out.println("Phase 2 Master Data tables created successfully.");
     }
 }
